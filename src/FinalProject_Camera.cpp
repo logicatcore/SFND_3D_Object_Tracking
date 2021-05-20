@@ -161,11 +161,28 @@ int main(int argc, const char *argv[])
 
         if (detectorType.compare("SHITOMASI") == 0)
         {
-            detKeypointsShiTomasi(keypoints, imgGray, false);
+            detKeypointsShiTomasi(keypoints, imgGray, false); // good features to track
+        }
+        else if(detectorType.compare("HARRIS") == 0)
+        {
+            /* Hyperparameters of detector algorithms
+            * HARRIS 
+            * 1) Blocksize for applying gaussian kernel and calculating the intensity matrix 
+            * 2) Sobel operator size (odd)
+            * 3) Min corner response values
+            * 4) Harris parameter
+            * 5) Max permissible overlap of two keypoints
+            */
+            detKeypointsHarris(keypoints, imgGray, false);
         }
         else
         {
-            //...
+            /* Hyperparameters of detector algorithms
+            * FAST 
+            * 1) Threshold value (int) 
+            * 2) NMS(Non-Maximum Supression) (bool)
+            */
+            detKeypointsModern(keypoints, imgGray, detectorType, false);
         }
 
         // optional : limit number of keypoints (helpful for debugging and learning)
@@ -207,8 +224,8 @@ int main(int argc, const char *argv[])
 
             vector<cv::DMatch> matches;
             string matcherType = "MAT_BF";        // MAT_BF, MAT_FLANN
-            string descriptorType = "DES_BINARY"; // DES_BINARY, DES_HOG
-            string selectorType = "SEL_NN";       // SEL_NN, SEL_KNN
+            string descriptorCat = descriptorType.compare("SIFT") == 0? "DES_HOG": "DES_BINARY"; // DES_BINARY, DES_HOG
+            string selectorType = "SEL_KNN";       // SEL_NN, SEL_KNN
 
             matchDescriptors(dataBuffer.front().keypoints, dataBuffer.back().keypoints,
                              dataBuffer.front().descriptors, dataBuffer.back().descriptors,
