@@ -103,7 +103,7 @@ void descKeypoints(vector<cv::KeyPoint> &keypoints, cv::Mat &img, cv::Mat &descr
     }
     else if (descriptorType.compare("SIFT") == 0)
     {
-        extractor = cv::xfeatures2d::SiftDescriptorExtractor::create(); //TODO fix scope
+        extractor = cv::SiftDescriptorExtractor::create(); //TODO fix scope
     }
     else
     {
@@ -320,7 +320,7 @@ void detKeypointsModern(std::vector<cv::KeyPoint> &keypoints, cv::Mat &img, std:
 		double edgeThreshold = 10;
 		double sigma = 1.6;
 
-        cv::Ptr<cv::FeatureDetector> detector = cv::xfeatures2d::SIFT::create(nfeatures, nOctaveLayers, contrastThreshold, edgeThreshold, sigma); //TODO fix scope
+        cv::Ptr<cv::FeatureDetector> detector = cv::SIFT::create(nfeatures, nOctaveLayers, contrastThreshold, edgeThreshold, sigma); //TODO fix scope
 
         t = (double)cv::getTickCount();
         detector->detect(img, keypoints);

@@ -2,6 +2,7 @@
 #include <iostream>
 #include <algorithm>
 #include <numeric>
+#include <unordered_set>
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
 
@@ -170,34 +171,69 @@ void clusterKptMatchesWithROI(BoundingBox &boundingBox, std::vector<cv::KeyPoint
 
 
 // Compute time-to-collision (TTC) based on keypoint correspondences in successive images
-void computeTTCCamera(std::vector<cv::KeyPoint> &kptsPrev, std::vector<cv::KeyPoint> &kptsCurr, 
-                      std::vector<cv::DMatch> kptMatches, double frameRate, double &TTC, cv::Mat *visImg)
+void computeTTCCamera(std::vector<cv::KeyPoint> &kptsPrevPrev, std::vector<cv::KeyPoint> &kptsPrev, std::vector<cv::KeyPoint> &kptsCurr, 
+                      std::vector<cv::DMatch> currKptMatches, std::vector<cv::DMatch> prevKptMatches, double frameRate, double &TTC, cv::Mat *visImg)
 {
     // compute distance ratios between all matched keypoints
     vector<double> distRatios; // stores the distance ratios for all keypoints between curr. and prev. frame
     double minDist = 10.0; // min. required distance
+    // in order to establish matches between three images, we need to check if there exists a match between prevFrame and prevprevFrame
+    // since this search needs to be done repeatedly, we can instead create a look up table to speed up the process
+    unordered_set<int> prevFrameKptsMatchIds;
+    for (auto it = currKptMatches.begin(); it != currKptMatches.end() - 1; ++it)
+    {
+        prevFrameKptsMatchIds.insert(it->queryIdx);
+    }
 
-    for (auto it1 = kptMatches.begin(); it1 != kptMatches.end() - 1; ++it1)
+    map<int, int> indexForPrevAndPrevPrevFrame;
+    int position(0);
+    for (auto it = prevKptMatches.begin(); it != prevKptMatches.end() - 1; ++it)
+    {
+        if (prevFrameKptsMatchIds.find(it->trainIdx) != prevFrameKptsMatchIds.end()){
+            indexForPrevAndPrevPrevFrame[it->trainIdx] = position;
+        }
+        position++;
+    }
+
+    for (auto it1 = currKptMatches.begin(); it1 != currKptMatches.end() - 1; ++it1)
     { // outer keypoint loop
 
         // get current keypoint and its matched partner in the prev. frame
-        cv::KeyPoint kpOuterCurr = kptsCurr[it1->trainIdx];
-        cv::KeyPoint kpOuterPrev = kptsPrev[it1->queryIdx];
-
-        for (auto it2 = kptMatches.begin() + 1; it2 != kptMatches.end(); ++it2)
+        cv::KeyPoint kpOuterCurr     = kptsCurr[it1->trainIdx];
+        cv::KeyPoint kpOuterPrev     = kptsPrev[it1->queryIdx];
+        cv::KeyPoint kpOuterPrevPrev;
+        if (indexForPrevAndPrevPrevFrame.count(it1->queryIdx) > 0)
+        {
+            kpOuterPrevPrev = kptsPrevPrev[(prevKptMatches.begin() + indexForPrevAndPrevPrevFrame[it1->queryIdx])->queryIdx];
+        }
+        else
+        {
+            continue;
+        }
+        for (auto it2 = currKptMatches.begin() + 1; it2 != currKptMatches.end(); ++it2)
         { // inner keypoint loop
             // get next keypoint and its matched partner in the prev. frame
             cv::KeyPoint kpInnerCurr = kptsCurr[it2->trainIdx];
             cv::KeyPoint kpInnerPrev = kptsPrev[it2->queryIdx];
+            cv::KeyPoint kpInnerPrevPrev;
+            if (indexForPrevAndPrevPrevFrame.count(it2->queryIdx) > 0)
+            {
+                kpInnerPrevPrev = kptsPrevPrev[(prevKptMatches.begin() + indexForPrevAndPrevPrevFrame[it2->queryIdx])->queryIdx];
+            }
+            else
+            {
+                continue;
+            }
 
             // compute distances and distance ratios
-            double distCurr = cv::norm(kpOuterCurr.pt - kpInnerCurr.pt);
-            double distPrev = cv::norm(kpOuterPrev.pt - kpInnerPrev.pt);
-
-            if (distPrev > std::numeric_limits<double>::epsilon() && distCurr >= minDist)
+            double h2 = cv::norm(kpOuterCurr.pt - kpInnerCurr.pt);
+            double h1 = cv::norm(kpOuterPrev.pt - kpInnerPrev.pt);
+            double h0 = cv::norm(kpOuterPrevPrev.pt - kpInnerPrevPrev.pt);
+            
+            if (h0 > std::numeric_limits<double>::epsilon() && h1 > std::numeric_limits<double>::epsilon() && h2 >= minDist)
             { // avoid division by zero
 
-                double distRatio = distCurr / distPrev;
+                double distRatio = (h0 * (2*h2 + h1) - h1 * h2)/(h0 * h2);
                 distRatios.push_back(distRatio);
             }
         } // eof inner loop over all matched kpts
@@ -228,7 +264,7 @@ void computeTTCCamera(std::vector<cv::KeyPoint> &kptsPrev, std::vector<cv::KeyPo
     // when medianDistRatio > 1 ====> that the preceding vehicle has moved closer to the ego vehicle
     // when medianDistRatio < 1 ====> that the preceding vehicle has moved farther from the ego vehicle
     // hence we can take the absolute value of TTC 
-    TTC = abs(dT / (1 - medianDistRatio));
+    TTC = abs(2 * dT / medianDistRatio);
 }
 
 // clustering helper functions
@@ -371,7 +407,7 @@ void matchBoundingBoxes(std::vector<cv::DMatch> &matches, std::map<int, int> &bb
             }
         }
         if (maxVotes != 0){
-            bbBestMatches[r] = colWithMaxVotes;
+            bbBestMatches[r] = colWithMaxVotes; // keys are previous frame bounding box ids and values are current frame bounding box ids
         }
     }
 }
