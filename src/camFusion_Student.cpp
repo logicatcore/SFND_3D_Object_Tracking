@@ -175,6 +175,8 @@ void computeTTCCamera(std::vector<cv::KeyPoint> &kptsPrev, std::vector<cv::KeyPo
 {
     // compute distance ratios between all matched keypoints
     vector<double> distRatios; // stores the distance ratios for all keypoints between curr. and prev. frame
+    double minDist = 10.0; // min. required distance
+
     for (auto it1 = kptMatches.begin(); it1 != kptMatches.end() - 1; ++it1)
     { // outer keypoint loop
 
@@ -184,9 +186,6 @@ void computeTTCCamera(std::vector<cv::KeyPoint> &kptsPrev, std::vector<cv::KeyPo
 
         for (auto it2 = kptMatches.begin() + 1; it2 != kptMatches.end(); ++it2)
         { // inner keypoint loop
-
-            double minDist = 100.0; // min. required distance
-
             // get next keypoint and its matched partner in the prev. frame
             cv::KeyPoint kpInnerCurr = kptsCurr[it2->trainIdx];
             cv::KeyPoint kpInnerPrev = kptsPrev[it2->queryIdx];
@@ -226,7 +225,10 @@ void computeTTCCamera(std::vector<cv::KeyPoint> &kptsPrev, std::vector<cv::KeyPo
       medianDistRatio = distRatios[size / 2];
     }
     double dT = 1 / frameRate;
-    TTC = -dT / (1 - medianDistRatio);
+    // when medianDistRatio > 1 ====> that the preceding vehicle has moved closer to the ego vehicle
+    // when medianDistRatio < 1 ====> that the preceding vehicle has moved farther from the ego vehicle
+    // hence we can take the absolute value of TTC 
+    TTC = abs(dT / (1 - medianDistRatio));
 }
 
 // clustering helper functions
