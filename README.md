@@ -50,7 +50,7 @@ Here, in the table we have the Lidar TTC estimates for 18 of the 19 images.
 
 Average Lidar TTC = 12.18 s
 
-We observe that the Lidar TTC estimate for the 7th image and 11th image are extremly high and extremly less compared to the average TTC estimate. This is due to the fact that Lidar TTC is computed using a constant velocity model and for these two particular frames though the closest lidar point on the preceding vehicle is not incorrect, the TTC estimates are wrong. That is, this form of oscillation in the TTC estimate can be noticed in the following graph as the vehicles accelerates and decelerates i.e. estimates of TTC are incorrect when we see change abrupt change in acceleration and in turn the velcotiy of the vehicle.
+We observe that the Lidar TTC estimate for the **7th image** and **11th image** are extremly high and extremly less compared to the average TTC estimate. This is due to the fact that Lidar TTC is computed using a constant velocity model and for these two particular frames *though* the closest lidar point on the preceding vehicle is not incorrect, the TTC estimates are wrong. These outliers and a form of oscillation in the TTC estimate can be noticed in the following graph as the vehicles accelerates and decelerates i.e. estimates of TTC are incorrect when we see abrupt change in acceleration and in turn the velocity of the vehicle.
 ![](./lidar_ttc.png)
 
 6. FP.6 - 
