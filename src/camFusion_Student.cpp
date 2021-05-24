@@ -230,10 +230,10 @@ void computeTTCCamera(std::vector<cv::KeyPoint> &kptsPrevPrev, std::vector<cv::K
             double h1 = cv::norm(kpOuterPrev.pt - kpInnerPrev.pt);
             double h0 = cv::norm(kpOuterPrevPrev.pt - kpInnerPrevPrev.pt);
             
-            if (h0 > std::numeric_limits<double>::epsilon() && h1 > std::numeric_limits<double>::epsilon() && h2 >= minDist)
+            if (h0 > std::numeric_limits<double>::epsilon() && h1 > std::numeric_limits<double>::epsilon() && h0 != h2)
             { // avoid division by zero
 
-                double distRatio = (h0 * (2*h2 + h1) - h1 * h2)/(h0 * h2);
+                double distRatio = (h1 * (h0 - h2))/(h0 * h2);
                 distRatios.push_back(distRatio);
             }
         } // eof inner loop over all matched kpts

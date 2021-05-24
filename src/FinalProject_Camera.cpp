@@ -293,6 +293,7 @@ int main(int argc, const char *argv[])
                             if (it1->second == it2->boxID) // check wether current match partner corresponds to this BB
                             {
                                 currBB = &(*it2);
+                                break;
                             }
                         }
 
@@ -301,14 +302,23 @@ int main(int argc, const char *argv[])
                             if (it1->first == it2->boxID) // check wether current match partner corresponds to this BB
                             {
                                 prevBB = &(*it2);
+                                break;
                             }
                         }
-
+                        int prevprevBBMatch(-1);
+                        for (auto it = dataBuffer[1].bbMatches.begin(); it != dataBuffer[1].bbMatches.end(); ++it)
+                        {
+                            if (it->second == prevBB->boxID){
+                                prevprevBBMatch = it->first;
+                                break;
+                            }
+                        }
                         for (auto it2 = dataBuffer.front().boundingBoxes.begin(); it2 != dataBuffer.front().boundingBoxes.end(); ++it2)
                         {
-                            if (it1->first == prevBB->boxID) // check wether current match partner corresponds to this BB
+                            if (prevprevBBMatch == it2->boxID) // check wether current match partner corresponds to this BB
                             {
                                 prevprevBB = &(*it2);
+                                break;
                             }
                         }
 
@@ -333,7 +343,7 @@ int main(int argc, const char *argv[])
                             cameraTTC.push_back(ttcCamera);
                             //// EOF STUDENT ASSIGNMENT
 
-                            bVis = false;
+                            bVis = true;
                             if (bVis)
                             {
                                 cv::Mat visImg = dataBuffer.back().cameraImg.clone();
