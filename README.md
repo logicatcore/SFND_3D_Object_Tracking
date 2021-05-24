@@ -53,4 +53,15 @@ Average Lidar TTC = 12.18 s
 We observe that the Lidar TTC estimate for the **7th image** and **11th image** are extremly high and extremly less compared to the average TTC estimate. This is due to the fact that Lidar TTC is computed using a constant velocity model and for these two particular frames *though* the closest lidar point on the preceding vehicle is not incorrect, the TTC estimates are wrong. These outliers and a form of oscillation in the TTC estimate can be noticed in the following graph as the vehicles accelerates and decelerates i.e. estimates of TTC are incorrect when we see abrupt change in acceleration and in turn the velocity of the vehicle.
 ![](./lidar_ttc.png)
 
-6. FP.6 - 
+6. FP.6 - Based on the collected data i.e. Camera TTC values in the excel sheet for a Constant Velocity Model (CVM), we can see the following keypoint detectors to be performing better compared to others in terms of consistency and providing a valid TTC estimate as apposed to **infinity** and **nan** values-
+  
+  * Shitomasi
+  * AKAZE
+  * SIFT
+  * BRISK
+
+**Note:** the above four keypoint detectors are ordered based on the increasing standard deviation of the average Camera based TTC values
+
+Some resons for why some combinations of detectors and descriptors do not function appropriately are -
+  * Keypoint matches are not being found between two successive frame in certain scenarios
+  * Formula used for calculating TTC value is based on Constant Velocity Model and when the relative velocity between the ego vehicle and the preceding vehicle doesn't change for two successive frame, the distance ratio value happens to be **1** and causes a division by zero and hence TTC = infinite
